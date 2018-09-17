@@ -12,7 +12,7 @@ cd $HOME
 mkdir wacomm
 cd wacomm
 mkdir ext
-mkdir bin
+mkdir work
 mkdir etc
 mkdir dist
 ```
@@ -111,6 +111,12 @@ cd ..
 cd $WACOMM_ROOT/wacomm
 cd src
 make COMPILER=pgi
+```
+
+# 7. Install WaComM
+
+```
+ln -sf $WACOMM_ROOT/wacomm/src/wacomm_pgi.exe $WACOMM_ROOT/work/wacomm_pgi.exe
 ```
 
 # Cite WaComm
