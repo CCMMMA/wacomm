@@ -100,6 +100,9 @@ cd netcdf-fortran-4.4.4
 export CPPFLAGS="-I$NETCDF/include"
 export LDFLAGS="-L$NETCDF/lib"
 ./configure --prefix=$NETCDF_FORTRAN
+make
+make install
+cd ..
 ```
 
 # 6. Compile WaComM
