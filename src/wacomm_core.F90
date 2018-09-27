@@ -71,10 +71,10 @@
  real :: start1=0, end1=0, time_tot=0;
  
  start1=omp_get_wtime() 
- 
+
  call OMP_SET_NUM_THREADS(ninterp)
  
-  
+
 !$OMP PARALLEL PRIVATE (num_threads, i, j, id_thread, k, u1, u2, u3, uw1, uw2) SHARED( mask_rho, wdims, vdims, udims) 
 
 id_thread=OMP_GET_THREAD_NUM()
