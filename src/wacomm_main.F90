@@ -19,11 +19,15 @@
        
 ! namelist vars
       integer ninterp, ncalc
-      character*200 nc_input, nc_output_root, restartfile,              &
+      character*200 nc_input, nc_input_root, nc_output_root,            &
+                    restartfile,                                        &
                     historyfile, inithsttime, rstfiledate, namelistfile
       integer io_form_wacomm
+      integer nhour, starttime, timestep
+      character*2 h
 
-      namelist /io/ nc_input, nc_output_root, io_form_wacomm
+      namelist /io/ nc_input_root, nc_output_root, io_form_wacomm,      &
+                    nhour, starttime, timestep
       namelist /ems/ nsources, i_source, j_source, k_source,            &
                      id_source, npartsperhour, mode,                    &
                      source_start, source_end
@@ -94,6 +98,7 @@
       read(8,nml=chm)
       read(8,nml=rst)
       read(8,nml=hst)
+      read(8,nml=omp)
       close(8)
 
       if ( restart ) then
@@ -110,6 +115,8 @@
       jdref=real(i) + shour/24.0
 60    format(i4,i2,i2,1x,i2)
 
+      write(h,'(I2.2)') starttime
+      nc_input=TRIM(nc_input_root)//"Z"//h//"00.nc"
       print*, "open file: ",nc_input
       call check( nf90_open(trim(nc_input), nf90_nowrite, ncid) )
       print*, "inquire about dimension of ", trim(nc_input),            &
@@ -147,7 +154,8 @@
         if ( nshp == 2 ) allocate(u(diml(dims(1)),diml(dims(2)),1,1))
         if ( nshp == 1 ) allocate(u(diml(dims(1)),1,1,1))
         if ( nshp == 0 ) allocate(u(1,1,1,1))
-        write(*,*) "dims:", diml(dims(1:4))
+        diml(dims(4))=nhour
+        write(*,*) "dims:", diml(dims(1:4)), "nshp: ", nshp
         udims=diml(dims(1:4))
        endif
        if ( var_name == 'v' ) then
@@ -159,7 +167,8 @@
         if ( nshp == 2 ) allocate(v(diml(dims(1)),diml(dims(2)),1,1))
         if ( nshp == 1 ) allocate(v(diml(dims(1)),1,1,1))
         if ( nshp == 0 ) allocate(v(1,1,1,1))
-        write(*,*) "dims:", diml(dims(1:4))
+        diml(dims(4))=nhour
+        write(*,*) "dims:", diml(dims(1:4)), "nshp: ", nshp
         vdims=diml(dims(1:4))
        endif
        if ( var_name == 'w' ) then
@@ -171,7 +180,8 @@
         if ( nshp == 2 ) allocate(w(diml(dims(1)),diml(dims(2)),1,1))
         if ( nshp == 1 ) allocate(w(diml(dims(1)),1,1,1))
         if ( nshp == 0 ) allocate(w(1,1,1,1))
-        write(*,*) "dims:", diml(dims(1:4))
+        diml(dims(4))=nhour
+        write(*,*) "dims:", diml(dims(1:4)), "nshp: ", nshp
         wdims=diml(dims(1:4))
        endif
 
@@ -184,7 +194,8 @@
         if ( nshp == 2 ) allocate(akt(diml(dims(1)),diml(dims(2)),1,1))
         if ( nshp == 1 ) allocate(akt(diml(dims(1)),1,1,1))
         if ( nshp == 0 ) allocate(akt(1,1,1,1))
-        write(*,*) "dims:", diml(dims(1:4))
+        diml(dims(4))=nhour
+        write(*,*) "dims:", diml(dims(1:4)), "nshp: ", nshp
         aktdims=diml(dims(1:4))
        endif
 
@@ -271,6 +282,8 @@
 30    format(a10,i3,3a10,i3,a10,10i3)
 40    format(a11,1x,a12,a3,i2,a9)
 
+      call check ( nf90_close(ncid) )
+
 
       allocate(conc(0:udims(1),0:vdims(2),-wdims(3)+2:0))
 
@@ -307,7 +320,7 @@
       health0=1.0
       npart=0
 
-      deltat=ocean_time(2)-ocean_time(1)
+      deltat=timestep
       write(*,*) "using a time step of:", deltat
       do i=1, nsources
        npartsperhour=npartsperhour*nint(3600.0/deltat)
@@ -336,25 +349,29 @@
 
 ! call wacom
       do i=1, udims(4)
+
+       write(h,'(I2.2)') starttime+i-1
+       nc_input=TRIM(nc_input_root)//"Z"//h//"00.nc"
+       print*, "open file: ",nc_input
+       call check( nf90_open(trim(nc_input), nf90_nowrite, ncid) )
+
        write(*,*) "reading time level:", i
        call check( nf90_inq_varid(ncid, "u", varid) )
-       call check( nf90_get_var(ncid, varid, u, start=(/1,1,1,i/),      &
-         count = (/ udims(1), udims(2), udims(3), 1 /)) )
+       call check( nf90_get_var(ncid, varid, u(1,1,1,i)) )
        call check( nf90_inq_varid(ncid, "v", varid) )
-       call check( nf90_get_var(ncid, varid, v, start=(/1,1,1,i/),      &
-         count = (/ vdims(1), vdims(2), vdims(3), 1 /)) )
+       call check( nf90_get_var(ncid, varid, v(1,1,1,i)) )
        call check( nf90_inq_varid(ncid, "w", varid) )
-       call check( nf90_get_var(ncid, varid, w, start=(/1,1,1,i/),      &
-         count = (/ wdims(1), wdims(2), wdims(3), 1 /)) )
+       call check( nf90_get_var(ncid, varid, w(1,1,1,i)) )
        call check( nf90_inq_varid(ncid, "zeta", varid) )
-       call check( nf90_get_var(ncid, varid, zeta, start=(/1,1,i/),     &
-         count = (/ wdims(1), wdims(2), 1 /)) )
+       call check( nf90_get_var(ncid, varid, zeta(1,1,i)) )
        call check( nf90_inq_varid(ncid, "AKt", varid) )
-       call check( nf90_get_var(ncid, varid, akt, start=(/1,1,1,i/),    &
-         count = (/ wdims(1), wdims(2), wdims(3), 1 /)) )
+       call check( nf90_get_var(ncid, varid, akt(1,1,1,i)) )
+
+       call check ( nf90_close(ncid) )
+
 
        if ( i == 1 ) zeta(:,:,1)=zeta(:,:,1)+bath
-       call wacomm(udims,vdims,wdims,u,v,w,akt,                          &
+       call wacomm(udims,vdims,wdims,u,v,w,akt,                         &
                   mask_u,mask_v,mask_rho,conc,                          &
                   zeta,s_w,s_rho,lon_u,lat_v,                           &
                   dti,deltat,ninterp,ncalc)
