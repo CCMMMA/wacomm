@@ -22,11 +22,12 @@
       character*200 nc_input, nc_input_root, nc_output_root,            &
                     restartfile,                                        &
                     historyfile, inithsttime, rstfiledate, namelistfile
+      character*200 nc_inputs(1000)
       integer io_form_wacomm
       integer nhour, starttime, timestep
       character*2 h
 
-      namelist /io/ nc_input_root, nc_output_root, io_form_wacomm,      &
+      namelist /io/ nc_inputs, nc_output_root, io_form_wacomm,          &
                     nhour, starttime, timestep
       namelist /ems/ nsources, i_source, j_source, k_source,            &
                      id_source, npartsperhour, mode,                    &
@@ -60,7 +61,7 @@
       allocatable lat_v(:,:)
       allocatable lon_u(:,:)
 
-      real*8 ocean_time
+      real*8 ocean_time, hh
       allocatable ocean_time(:)
 
       real conc
@@ -116,7 +117,8 @@
 60    format(i4,i2,i2,1x,i2)
 
       write(h,'(I2.2)') starttime
-      nc_input=TRIM(nc_input_root)//"Z"//h//"00.nc"
+      !nc_input=TRIM(nc_input_root)//"Z"//h//"00.nc"
+      nc_input=TRIM(nc_inputs(1))
       print*, "open file: ",nc_input
       call check( nf90_open(trim(nc_input), nf90_nowrite, ncid) )
       print*, "inquire about dimension of ", trim(nc_input),            &
@@ -261,8 +263,9 @@
 
        if ( var_name == 'ocean_time' ) then
         write(*,40) 'variable', var_name, ' is', nshp, '-d shaped'
-        if ( nshp == 1 ) allocate(ocean_time(diml(dims(1))))
-        call check( nf90_get_var(ncid, varid, ocean_time) )
+        if ( nshp == 1 ) allocate(ocean_time(1000))
+        call check( nf90_get_var(ncid, varid, hh) )
+        ocean_time(1)=hh
         write(*,*) "dims:", diml(dims(1:1))
        endif
 
@@ -287,7 +290,7 @@
 
       allocate(conc(0:udims(1),0:vdims(2),-wdims(3)+2:0))
 
-      totpart=size(ocean_time,1)*sum(npartsperhour(1:nsources)) +       &
+      totpart=udims(4)*size(ocean_time,1)*sum(npartsperhour(1:nsources)) +       &
         nrstpart
       allocate(xpart(totpart))
       allocate(ypart(totpart))
@@ -351,21 +354,25 @@
       do i=1, udims(4)
 
        write(h,'(I2.2)') starttime+i-1
-       nc_input=TRIM(nc_input_root)//"Z"//h//"00.nc"
+       !nc_input=TRIM(nc_input_root)//"Z"//h//"00.nc"
+       nc_input=TRIM(nc_inputs(i))
        print*, "open file: ",nc_input
        call check( nf90_open(trim(nc_input), nf90_nowrite, ncid) )
 
        write(*,*) "reading time level:", i
        call check( nf90_inq_varid(ncid, "u", varid) )
-       call check( nf90_get_var(ncid, varid, u(1,1,1,i)) )
+       call check( nf90_get_var(ncid, varid, u(1,1,1,1)) )
        call check( nf90_inq_varid(ncid, "v", varid) )
-       call check( nf90_get_var(ncid, varid, v(1,1,1,i)) )
+       call check( nf90_get_var(ncid, varid, v(1,1,1,1)) )
        call check( nf90_inq_varid(ncid, "w", varid) )
-       call check( nf90_get_var(ncid, varid, w(1,1,1,i)) )
+       call check( nf90_get_var(ncid, varid, w(1,1,1,1)) )
        call check( nf90_inq_varid(ncid, "zeta", varid) )
-       call check( nf90_get_var(ncid, varid, zeta(1,1,i)) )
+       call check( nf90_get_var(ncid, varid, zeta(1,1,1)) )
        call check( nf90_inq_varid(ncid, "AKt", varid) )
-       call check( nf90_get_var(ncid, varid, akt(1,1,1,i)) )
+       call check( nf90_get_var(ncid, varid, akt(1,1,1,1)) )
+       call check( nf90_inq_varid(ncid, "ocean_time", varid) )
+       call check( nf90_get_var(ncid, varid, hh) )
+       ocean_time(i)=hh
 
        call check ( nf90_close(ncid) )
 
