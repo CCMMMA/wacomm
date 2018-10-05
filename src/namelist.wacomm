@@ -1,6 +1,10 @@
 &io
  nc_input = '/home/montella/wacomm_rst/wacomm-1.0.0/WACOMM/rms3_d04_20151208Z0000_120h.nc'
+ nc_input_root =,
  nc_output_root = 'wacomm_his_',
+ starttime=0,
+ nhour=3,
+ timestep=3600,
  io_form_wacomm = 1,
 /
 
