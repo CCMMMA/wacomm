@@ -22,9 +22,9 @@
       allocatable pstatus(:)
 
 
-      integer nsources, i_source(100), j_source(100), k_source(100),  &
-                     id_source(100), npartsperhour(100), mode(100),   &
-                     source_start(100), source_end(100)
+      integer nsources, i_source(600), j_source(600), k_source(600),  &
+                     id_source(600), npartsperhour(600), mode(600),   &
+                     source_start(600), source_end(600)
 
 
       end module
