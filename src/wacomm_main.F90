@@ -26,6 +26,7 @@
       integer io_form_wacomm
       integer nhour, starttime, timestep
       character*2 h
+      character*3 h3
 
       namelist /io/ nc_inputs, nc_output_root, io_form_wacomm,          &
                     nhour, starttime, timestep
@@ -80,7 +81,7 @@
       real dti, deltat
 
       logical restart, history
-      integer nrstpart
+      integer nrstpart, ixx, iyy
       real outfreq, interval
       integer syear, smon, sday, shour, rstcounter
       double precision jdref, jd
@@ -339,13 +340,6 @@
        close(20)
       endif
 
-      ncmode = 1
-      call fgennc(ncmode,trim(nc_output_root)//'001.nc',                &
-          vdims(1), udims(2), udims(3), udims(4), nsources, 0,          &
-          lat_rho, lon_rho, mask_rho, zeta, bath, s_rho, ocean_time,    &
-          conc)
-      ncmode = 2
-
       iouter=0
       idead=0
       rstcounter=0
@@ -358,6 +352,13 @@
        nc_input=TRIM(nc_inputs(i))
        print*, "open file: ",nc_input
        call check( nf90_open(trim(nc_input), nf90_nowrite, ncid) )
+
+       ncmode = 1
+       write(h3,'(I3.3)') starttime+i-1
+       call fgennc(ncmode,trim(nc_output_root)//h3//'.nc',              &
+           vdims(1), udims(2), udims(3), udims(4), nsources, 0,         &
+           lat_rho, lon_rho, mask_rho, zeta, bath, s_rho, ocean_time,   &
+           conc)
 
        write(*,*) "reading time level:", i
        call check( nf90_inq_varid(ncid, "u", varid) )
@@ -384,10 +385,17 @@
                   dti,deltat,ninterp,ncalc)
        if ( i == 1 ) zeta(:,:,1)=zeta(:,:,1)-bath
 
-       call fgennc(ncmode,trim(nc_output_root)//'001.nc',               &
-           vdims(1), udims(2), udims(3), udims(4), nsources, i,         &
+       ncmode = 2
+       call fgennc(ncmode,trim(nc_output_root)//h3//'.nc',              &
+           vdims(1), udims(2), udims(3), udims(4), nsources, 1,         &
            lat_rho, lon_rho, mask_rho, zeta(1,1,1), bath, s_rho,        &
            ocean_time(i), conc)
+
+       ncmode = 3
+       call fgennc(ncmode,trim(nc_output_root)//h3//'.nc',              &
+           vdims(1), udims(2), udims(3), udims(4), nsources, 0,         &
+           lat_rho, lon_rho, mask_rho, zeta(1,1,1), bath, s_rho,        &
+          ocean_time, conc)
 
        if ( i < udims(4) .AND. history ) then
         if ( int((ocean_time(i+1)-ocean_time(1))/outfreq) >             &
@@ -404,15 +412,24 @@
        endif
  70    format(i4,i2.2,i2.2,a1,i2.2)
 
+
+#if 0
+      nrstpart=0
+      do ip=1, npart
+       if ( health(ip) .gt. survprob ) then
+        ixx=int(xpart(ip))
+        iyy=int(ypart(ip))
+        if ( mask_rho(ixx,iyy) .gt. 0.0 ) then
+         nrstpart=nrstpart+1
+        endif
+       endif
+      enddo
+      print*, "Number of parts", nrstpart
+#endif
+
        
       enddo
 
-
-      ncmode = 3
-      call fgennc(ncmode,trim(nc_output_root)//'001.nc',                &
-          vdims(1), udims(2), udims(3), udims(4), nsources, 0,          &
-          lat_rho, lon_rho, mask_rho, zeta(1,1,i), bath, s_rho,         &
-          ocean_time, conc)
 
 
 #if DEBUG
@@ -666,6 +683,11 @@ save ncid, conc_id, zeta_id, ocean_time_id
       iret = nf_put_att_text(ncid, conc_id, 'long_name', 46, 'concentrat&
       ion_of_suspended_matter_in_sea_water')
       call check_err(iret)
+      iret = nf_put_att_text(ncid, conc_id, 'coordinates', 22, 'lon_rho &
+      lat_rho s_tho')
+      call check_err(iret)
+      iret = nf_put_att_text(ncid, conc_id, 'field', 22, ' ')           
+      call check_err(iret)
       iret = nf_put_att_text(ncid, conc_id, 'time', 10, 'ocean_time'    &
       )
       call check_err(iret)
@@ -690,7 +712,7 @@ save ncid, conc_id, zeta_id, ocean_time_id
       iret = nf_put_att_text(ncid, lat_rho_id, 'long_name', 22, 'latitud&
       e of rho-points')
       call check_err(iret)
-      iret = nf_put_att_text(ncid, lat_rho_id, 'units', 11, 'degree_east&
+      iret = nf_put_att_text(ncid, lat_rho_id, 'units', 11, 'degree_north&
       ')
       call check_err(iret)
       iret = nf_put_att_text(ncid, lat_rho_id, 'standard_name', 8, 'lati&
@@ -760,8 +782,8 @@ save ncid, conc_id, zeta_id, ocean_time_id
       iret = nf_put_att_real(ncid, zeta_id, '_FillValue', NF_REAL, 1,   &
       realval)
       call check_err(iret)
-      iret = nf_put_att_text(ncid, h_id, 'long_name', 24, 'bathymetry at&
-       RHO-points')
+      iret = nf_put_att_text(ncid, h_id, 'long_name', 24, 'bathymetry a &
+      t RHO-points')
       call check_err(iret)
       iret = nf_put_att_text(ncid, h_id, 'units', 5, 'meter')
       call check_err(iret)
@@ -770,8 +792,8 @@ save ncid, conc_id, zeta_id, ocean_time_id
       call check_err(iret)
       iret = nf_put_att_text(ncid, h_id, 'field', 12, 'bath, scalar')
       call check_err(iret)
-      iret = nf_put_att_text(ncid, ocean_time_id, 'long_name', 25, 'time&
-       since initialization')
+      iret = nf_put_att_text(ncid, ocean_time_id, 'long_name', 25, 'tim &
+      e since initialization')
       call check_err(iret)
       iret = nf_put_att_text(ncid, ocean_time_id, 'units', 37, 'seconds &
       since 1968-05-23 00:00:00 GMT')
@@ -793,8 +815,8 @@ save ncid, conc_id, zeta_id, ocean_time_id
       iret = nf_put_att_text(ncid, nf_global, 'Conventions', 6, 'CF-1.4'&
       )
       call check_err(iret)
-      iret = nf_put_att_text(ncid, nf_global, 'type', 22, 'roms/toms his&
-      tory file')
+      iret = nf_put_att_text(ncid, nf_global, 'type', 22, 'wacomm histor&
+      y file')
       call check_err(iret)
 
 ! leave define mode
