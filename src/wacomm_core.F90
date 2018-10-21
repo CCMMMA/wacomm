@@ -69,6 +69,8 @@
  integer :: res_u=0, res_v=0, res_nsources=0, nsources_loc=0, id_thread=0, num_threads=0, udims_loc=0, vdims_loc=0, res_i=0
  integer :: npart_loc=0, res_npart=0, res_iint=0, iint_loc=0, N=0
  real :: start1=0, end1=0, time_tot=0;
+
+ integer :: nrstpart
  
  start1=omp_get_wtime() 
 
@@ -908,10 +910,31 @@ endif
 !!                           print section                                !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- write(*,*)
- write(*,'(a24,i6)')'total # of parts ->',npart
- write(*,'(a24,i6)')'dead parts       ->',idead
- write(*,'(a24,i6)')'outer parts      ->',iouter
+
+#if 1
+      nrstpart=0
+      iouter=0
+      idead=0
+      do ip=1, npart
+       if ( health(ip) .gt. survprob ) then
+        ixx=int(xpart(ip))
+        iyy=int(ypart(ip))
+        if ( mask_rho(ixx,iyy) .gt. 0.0 ) then
+         nrstpart=nrstpart+1
+        else
+         iouter=iouter+1
+        endif
+       else
+        idead=idead+1
+       endif
+      enddo
+      write(*,*)
+      write(*,'(a24,i6)')'total # of parts ->',npart
+      write(*,'(a24,i6)')'# of viable parts ->',nrstpart
+      write(*,'(a24,i6)')'dead parts       ->',idead
+      write(*,'(a24,i6)')'outer parts      ->',iouter
+#endif
+
 
 ! write(*,*)'conc             ->',conc(98,337,0)
 
