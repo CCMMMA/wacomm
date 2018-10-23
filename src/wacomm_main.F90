@@ -362,15 +362,15 @@
 
        write(*,*) "reading time level:", i
        call check( nf90_inq_varid(ncid, "u", varid) )
-       call check( nf90_get_var(ncid, varid, u(1,1,1,1)) )
+       call check( nf90_get_var(ncid, varid, u) )
        call check( nf90_inq_varid(ncid, "v", varid) )
-       call check( nf90_get_var(ncid, varid, v(1,1,1,1)) )
+       call check( nf90_get_var(ncid, varid, v) )
        call check( nf90_inq_varid(ncid, "w", varid) )
-       call check( nf90_get_var(ncid, varid, w(1,1,1,1)) )
+       call check( nf90_get_var(ncid, varid, w) )
        call check( nf90_inq_varid(ncid, "zeta", varid) )
-       call check( nf90_get_var(ncid, varid, zeta(1,1,1)) )
+       call check( nf90_get_var(ncid, varid, zeta) )
        call check( nf90_inq_varid(ncid, "AKt", varid) )
-       call check( nf90_get_var(ncid, varid, akt(1,1,1,1)) )
+       call check( nf90_get_var(ncid, varid, akt) )
        call check( nf90_inq_varid(ncid, "ocean_time", varid) )
        call check( nf90_get_var(ncid, varid, hh) )
        ocean_time(i)=hh
