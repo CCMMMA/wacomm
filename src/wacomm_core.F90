@@ -138,6 +138,8 @@ do j=1, vdims(2)
 
 endif 
 
+!print*, ucomp(:,:,-25)
+
   
  ! write(*,*) "Thread 1 vdims_loc: ",vdims_loc
  ! write(*,*) "Thread 1 res_v: ", res_v
@@ -528,6 +530,7 @@ endif
  		xleap=uu*dti
  		yleap=vv*dti
  		zleap=(vs+ww)*dti
+                !print*, uu, vv, ww, vs, dti
 
 ! stochastic counterpart
 
