@@ -46,7 +46,7 @@
 
 ! miscellaneous
  real*8 :: rn
- integer :: time(8), seed(8)
+ integer :: time(8), seed(64)
 
  integer :: ixx, iyy, izz
  integer :: i, j, k, iint, ll
@@ -351,13 +351,16 @@ endif
       do ip=npart+1, npart+npartsperhour(i)
  	      health(ip)=health0
  		if ( mode(i) == 1 ) then
- 		      call random_number(rn)
+ 		      !call random_number(rn)
+
+                        rn = 0.0 !Disable Random
+
  			xpart(ip)=i_source(i) + rn*0.5 - 0.25
                           !xpart(ip)=i_source(i) + 0.5*0.5 - 0.25
- 				call random_number(rn)
+ 				!call random_number(rn)
  				ypart(ip)=j_source(i) + rn*0.5 - 0.25
                                 !ypart(ip)=j_source(i) + 0.5*0.5 - 0.25
- 				call random_number(harvest = rn)
+ 				!call random_number(harvest = rn)
  				zpart(ip)=k_source(i) + rn*0.5 - 0.25
                                 !zpart(ip)=k_source(i) + 0.5*0.5 - 0.25
  			else if ( mode(i) <= 0 ) then
@@ -384,13 +387,14 @@ endif
       do ip=npart+1, npart+npartsperhour(i)
           health(ip)=health0
           if ( mode(i) == 1 ) then
-            call random_number(rn)
+            rn = 0.0
+            !call random_number(rn)
             xpart(ip)=i_source(i) + rn*0.5 - 0.25
             !xpart(ip)=i_source(i) + 0.5*0.5 - 0.25  
-            call random_number(rn)
+            !call random_number(rn)
             ypart(ip)=j_source(i) + rn*0.5 - 0.25
             !ypart(ip)=j_source(i) + 0.5*0.5 - 0.25  
-            call random_number(rn)
+            !call random_number(rn)
             zpart(ip)=k_source(i) + rn*0.5 - 0.25
             !zpart(ip)=k_source(i) + 0.5*0.5 - 0.25  
           else if ( mode(i) <= 0 ) then  
@@ -545,22 +549,23 @@ endif
 !write(*,*) "pseudo-random numbers"
  		
  		g=0.
+                r=0.0
  		do i=1,12
- 			call random_number(r)
+ 			!call random_number(r)
  			g=g+r-0.5
                         !g=g+0.5-0.5
  		enddo
  		rxleap=g*sigmaprof
  		g=0.
  		do i=1,12
- 			call random_number(r)
+ 			!call random_number(r)
  			g=g+r-0.5
                         !g=g+0.5-0.5
  		enddo
  		ryleap=g*sigmaprof
  		g=0.
  		do i=1,12
- 			call random_number(r)
+ 			!call random_number(r)
  			g=g+r-0.5
                         !g=g+0.5-0.5
  		enddo
