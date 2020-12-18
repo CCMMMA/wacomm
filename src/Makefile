@@ -29,13 +29,15 @@ CD  = cd
 ##############  You shouldn't need to change anything below here
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-ifeq ($(COMPILER),pgi)
+#ifeq ($(COMPILER),pgi)
+ifneq (,$(findstring pgi,$(COMPILER)))
   FC=pgf90
   FFLAGS=$(PGIFLAGS)
   LDFLAGS = $(LIBRARY) -mp
 endif
 
-ifeq ($(COMPILER),gnu)
+#ifeq ($(COMPILER),gnu)
+ifneq (,$(findstring gnu,$(COMPILER)))
   FC=gfortran
   FFLAGS=$(GNUFLAGS)
   LDFLAGS=$(LIBRARY) -fopenmp
